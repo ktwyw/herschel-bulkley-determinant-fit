@@ -23,7 +23,7 @@ Generate synthetic data, or upload/paste a CSV of shear rate (1/s) and shear str
 - `hb_mullineux/figures.py`, `reproduce_paper.py` — reproduce Figures 1–5 of the paper plus a synthetic demonstration (fit, determinant, residuals, model comparison) into `outputs/`.
 - `hb_mullineux/cli.py` — fit a CSV file from the command line.
 - `web/herschel_bulkley_fit.html` — the browser app described above (no server, no build step, no external libraries).
-- `data/` — example CSV files: a synthetic flow curve; the chlorine data in the fitted form `(x = e^{-t}, y)` (use `--n-max 1.4`, as in the paper) and, for reference, as the original time series `(t, y)` — the latter is not itself Herschel–Bulkley input.
+- `data/` — example CSV files: a synthetic flow curve, and the chlorine-transport data of Bates & Watts used in the paper's Section 7, both in the fitted form `(x = e^{-t}, y)` (use `--n-max 1.4`, as in the paper) and as the original time series `(t, y)`; the latter is provided for reference and is not itself Herschel–Bulkley input.
 - `hb_mullineux/metrics.py` — goodness-of-fit statistics, confidence intervals, and the nested-model comparison (Newtonian / power law / Bingham vs Herschel–Bulkley with F-tests).
 - `tests/` — pytest suite (15 tests).
 
@@ -108,4 +108,4 @@ The shear rate is written $\dot\gamma$ throughout. In the figures this is matplo
 
 ## License
 
-MIT (see `LICENSE`). The reproduced paper is © Elsevier and is not included; the "Chlorine" data are the Bates & Watts data set as tabulated in the paper.
+This project is released under the MIT License. See [`LICENSE`](LICENSE) for the full text.
