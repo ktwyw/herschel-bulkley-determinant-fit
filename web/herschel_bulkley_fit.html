@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Herschel–Bulkley fit by the determinant method</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #eef2f4;
+  --surface: #ffffff;
+  --surface-2: #f6f8f9;
+  --ink: #16232d;
+  --ink-2: #4c5b68;
+  --ink-3: #8593a0;
+  --line: #d5dde3;
+  --teal: #0b6b6b;
+  --teal-soft: rgba(11,107,107,0.12);
+  --amber: #b8641a;
+  --amber-soft: rgba(184,100,26,0.14);
+  --danger: #a4322b;
+  --data: #35506a;
+  --focus: #1f7de0;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12181e;
+    --surface: #1a2229;
+    --surface-2: #202a32;
+    --ink: #e6ecf0;
+    --ink-2: #b3bfc9;
+    --ink-3: #7d8b97;
+    --line: #2f3b46;
+    --teal: #4fb5ae;
+    --teal-soft: rgba(79,181,174,0.16);
+    --amber: #e0a15c;
+    --amber-soft: rgba(224,161,92,0.16);
+    --danger: #e3776f;
+    --data: #9db4ca;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12181e; --surface: #1a2229; --surface-2: #202a32; --ink: #e6ecf0; --ink-2: #b3bfc9;
+  --ink-3: #7d8b97; --line: #2f3b46; --teal: #4fb5ae; --teal-soft: rgba(79,181,174,0.16);
+  --amber: #e0a15c; --amber-soft: rgba(224,161,92,0.16); --danger: #e3776f; --data: #9db4ca;
+}
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+a { color: var(--teal); }
+header.top {
+  padding: 28px 24px 16px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+header.top h1 {
+  margin: 0 0 4px;
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+header.top p {
+  margin: 0;
+  color: var(--ink-2);
+  max-width: 72ch;
+}
+main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 880px) {
+  main { grid-template-columns: 1fr; }
+  header.top { padding: 20px 16px 12px; }
+  main { padding: 0 16px 32px; }
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.panel > .body { padding: 16px; }
+.panel h2 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+/* segmented source switch */
+.seg {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.seg button {
+  background: var(--surface-2);
+  border: 0;
+  padding: 8px 6px;
+  font: inherit;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--teal); color: #fff; }
+.seg button:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--focus); outline-offset: 1px;
+}
+.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+.fields label, .field label { display: block; font-size: 0.82rem; color: var(--ink-2); margin-bottom: 3px; }
+.fields input, .field input, .field select, textarea {
+  width: 100%;
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.field { margin-top: 10px; }
+.fields .wide { grid-column: 1 / -1; }
+textarea { min-height: 140px; resize: vertical; font-size: 0.9rem; }
+.btn {
+  font: inherit;
+  font-weight: 500;
+  border: 1px solid var(--teal);
+  background: var(--teal);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn.quiet { background: transparent; color: var(--teal); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.drop {
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  text-align: center;
+  color: var(--ink-2);
+  background: var(--surface-2);
+}
+.drop.over { border-color: var(--teal); background: var(--teal-soft); }
+.drop input { display: none; }
+.note { font-size: 0.84rem; color: var(--ink-3); margin: 8px 0 0; }
+.msg { margin-top: 12px; font-size: 0.88rem; }
+.msg.error { color: var(--danger); }
+.msg.ok { color: var(--ink-2); }
+/* hero equation */
+.hero {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.equation {
+  font-size: clamp(1.5rem, 3.4vw, 2.4rem);
+  line-height: 1.25;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+.equation .k { color: var(--teal); }
+.equation .n { color: var(--amber); }
+.equation sup { font-size: 0.6em; }
+.equation .unit { font-size: 0.5em; color: var(--ink-3); font-weight: 400; margin-left: 6px; }
+.equation.idle { color: var(--ink-3); font-weight: 400; }
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 20px;
+  margin-top: 14px;
+}
+.stat .l { font-size: 0.8rem; color: var(--ink-2); }
+.stat .v { font-size: 1.05rem; font-weight: 500; }
+.stat .se { font-size: 0.8rem; color: var(--ink-3); }
+.charts { display: grid; grid-template-columns: 1fr; gap: 0; }
+.chart-block { padding: 14px 20px 8px; border-bottom: 1px solid var(--line); }
+.chart-block:last-child { border-bottom: 0; }
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.chart-head h3 { margin: 0; font-size: 0.95rem; font-weight: 600; }
+.chart-head p { margin: 0; font-size: 0.84rem; color: var(--ink-2); max-width: 70ch; }
+.chart-wrap { position: relative; height: 320px; margin-top: 8px; }
+.chart-wrap svg { width: 100%; height: 100%; display: block; font-family: inherit; }
+.chart-wrap text { fill: var(--ink-2); font-size: 12px; }
+.chart-wrap .axis { stroke: var(--ink-2); stroke-width: 1; }
+.chart-wrap .grid { stroke: var(--line); stroke-width: 1; }
+@media (max-width: 600px) { .chart-wrap { height: 260px; } }
+.toggle { font-size: 0.84rem; color: var(--ink-2); display: inline-flex; gap: 6px; align-items: center; }
+details { padding: 12px 20px 16px; }
+details summary { cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin-top: 10px; }
+th, td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--line); }
+th:first-child, td:first-child { text-align: left; }
+th { font-weight: 500; color: var(--ink-2); }
+tr.best td { background: var(--teal-soft); }
+.table-scroll { overflow-x: auto; }
+footer.method {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+  color: var(--ink-2);
+  font-size: 0.9rem;
+}
+footer.method h2 { font-size: 1rem; color: var(--ink); margin: 0 0 6px; }
+footer.method ol { padding-left: 20px; margin: 6px 0; }
+footer.method li { margin: 4px 0; }
+footer.method code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; font-size: 0.86em; }
+.det {
+  display: inline-grid; grid-template-columns: auto auto auto; gap: 2px 14px;
+  padding: 4px 10px; border-left: 1px solid var(--ink-2); border-right: 1px solid var(--ink-2);
+  font-size: 0.86rem; margin: 6px 0; vertical-align: middle;
+}
+.gd { position: relative; display: inline-block; font-style: italic; }
+.gd::after { content: ""; position: absolute; left: 52%; top: -0.04em; width: 0.17em; height: 0.17em; border-radius: 50%; background: currentColor; transform: translateX(-50%); }
+math { font-size: 1em; }
+.equation math .k { color: var(--teal); }
+.equation math .n { color: var(--amber); }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px 20px; margin-top: 8px; font-size: 0.88rem; }
+.metrics-grid div { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dotted var(--line); padding: 3px 0; }
+.metrics-grid span:first-child { color: var(--ink-2); }
+.verdict { font-weight: 500; }
+.verdict.yes { color: var(--teal); } .verdict.no { color: var(--amber); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Herschel–Bulkley fit by the determinant method</h1>
+  <p>Fits the flow-curve model <em>σ = σ₀ + K <span class="gd">γ</span>ⁿ</em> to shear stress against shear rate without estimating the yield stress first and without a general non-linear solver, following
+  <a href="https://doi.org/10.1016/j.apm.2007.09.010" target="_blank" rel="noopener">Mullineux, Appl. Math. Modelling 32 (2008) 2538–2551</a>.
+  All computation runs in your browser; uploaded files stay on your machine.</p>
+</header>
+
+<main>
+  <!-- ---------------------------------------------------------------- data -->
+  <section class="panel" aria-labelledby="data-h">
+    <h2 id="data-h">Data</h2>
+    <div class="body">
+      <div class="seg" role="group" aria-label="Data source">
+        <button type="button" data-src="synthetic" aria-pressed="true">Synthetic</button>
+        <button type="button" data-src="upload" aria-pressed="false">Upload CSV</button>
+        <button type="button" data-src="paste" aria-pressed="false">Paste</button>
+      </div>
+
+      <div id="src-synthetic">
+        <div class="fields">
+          <div><label for="s-y0">Yield stress σ₀ (Pa)</label><input id="s-y0" type="number" step="any" value="5"></div>
+          <div><label for="s-K">Consistency K (Pa sⁿ)</label><input id="s-K" type="number" step="any" value="4"></div>
+          <div><label for="s-n">Flow index n</label><input id="s-n" type="number" step="any" value="0.35"></div>
+          <div><label for="s-noise">Noise (% of stress)</label><input id="s-noise" type="number" step="any" min="0" value="3"></div>
+          <div><label for="s-xmin">Min shear rate (1/s)</label><input id="s-xmin" type="number" step="any" min="0" value="1"></div>
+          <div><label for="s-xmax">Max shear rate (1/s)</label><input id="s-xmax" type="number" step="any" min="0" value="400"></div>
+          <div><label for="s-m">Number of points</label><input id="s-m" type="number" step="1" min="4" value="40"></div>
+          <div><label for="s-seed">Random seed</label><input id="s-seed" type="number" step="1" value="1"></div>
+          <div class="wide"><label for="s-spacing">Spacing of shear rates</label>
+            <select id="s-spacing"><option value="log" selected>Logarithmic (typical rheometer sweep)</option><option value="lin">Linear</option></select></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btn-generate" type="button">Generate and fit</button>
+        </div>
+        <p class="note">The paper's own example is σ₀ = 5 Pa, K = 4 Pa sⁿ, n = 0.35. Set the noise to 0 to recover it exactly.</p>
+      </div>
+
+      <div id="src-upload" hidden>
+        <label class="drop" id="drop">
+          <input id="file" type="file" accept=".csv,.txt,.tsv,text/csv,text/plain">
+          <strong>Choose a CSV file</strong> or drop it here<br>
+          <span class="note">Two columns: shear rate (1/s), shear stress (Pa). A header row is optional; comma, semicolon, tab or space separated; decimal commas are accepted.</span>
+        </label>
+        <div class="fields" id="col-pick" hidden style="margin-top:12px">
+          <div><label for="col-x">Shear-rate column</label><select id="col-x"></select></div>
+          <div><label for="col-y">Shear-stress column</label><select id="col-y"></select></div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btn-fit-upload" type="button" disabled>Fit this file</button>
+        </div>
+        <p class="msg" id="upload-msg"></p>
+      </div>
+
+      <div id="src-paste" hidden>
+        <div class="field">
+          <label for="paste">Shear rate and shear stress, one pair per line</label>
+          <textarea id="paste" spellcheck="false" placeholder="shear_rate_1_s, shear_stress_Pa
+1, 8.9
+2, 10.2
+5, 12.6
+10, 14.2
+20, 16.9
+50, 21.2
+100, 25.0
+200, 30.0
+400, 36.5"></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn" id="btn-fit-paste" type="button">Fit pasted data</button>
+        </div>
+        <p class="msg" id="paste-msg"></p>
+      </div>
+
+      <div class="field">
+        <label for="nmax">Largest n to search (the root is usually well below 1 for shear-thinning fluids)</label>
+        <input id="nmax" type="number" step="any" min="0.05" value="5">
+      </div>
+      <p class="msg" id="fit-msg"></p>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------------------- result -->
+  <section class="panel" aria-live="polite">
+    <div class="hero">
+      <p class="equation idle" id="equation">Generate synthetic data or load a file to fit σ = σ₀ + K <span class="gd">γ</span>ⁿ</p>
+      <div class="stats" id="stats" hidden>
+        <div class="stat"><div class="l">Yield stress σ₀</div><div class="v" id="v-y0"></div><div class="se" id="se-y0"></div></div>
+        <div class="stat"><div class="l">Consistency K</div><div class="v" id="v-K"></div><div class="se" id="se-K"></div></div>
+        <div class="stat"><div class="l">Flow index n</div><div class="v" id="v-n"></div><div class="se" id="se-n"></div></div>
+        <div class="stat"><div class="l">Points</div><div class="v" id="v-m"></div><div class="se" id="v-src"></div></div>
+        <div class="stat"><div class="l">RMS error E = √(S/m)</div><div class="v" id="v-E"></div><div class="se" id="v-S"></div></div>
+        <div class="stat"><div class="l">R²</div><div class="v" id="v-r2"></div><div class="se" id="v-lm"></div></div>
+      </div>
+      <div class="actions" id="dl" hidden>
+        <button class="btn quiet" id="btn-dl-curve" type="button">Download fitted curve (CSV)</button>
+        <button class="btn quiet" id="btn-dl-json" type="button">Download parameters (JSON)</button>
+        <button class="btn quiet" id="btn-dl-data" type="button">Download the data used (CSV)</button>
+      </div>
+    </div>
+
+    <div class="charts">
+      <div class="chart-block">
+        <div class="chart-head">
+          <div><h3>Flow curve</h3><p>Data points and the fitted Herschel–Bulkley curve.</p></div>
+          <label class="toggle"><input type="checkbox" id="logx" checked> logarithmic shear-rate axis</label>
+        </div>
+        <div class="chart-wrap" id="c-fit" role="img" aria-label="Shear stress against shear rate with fitted curve"></div>
+      </div>
+      <div class="chart-block">
+        <div class="chart-head">
+          <div><h3>The determinant F̄(n)</h3><p>n is the non-trivial root. F̄ vanishes at n = 0, rises through positive values and is negative for large n, so a root always exists; the marked root is the one with the smallest residual.</p></div>
+        </div>
+        <div class="chart-wrap" id="c-det" role="img" aria-label="Determinant F bar of n against n"></div>
+      </div>
+    </div>
+
+    <div class="chart-block" id="gof-block" hidden>
+      <div class="chart-head">
+        <div><h3>Goodness of fit</h3><p>Residual statistics, parameter uncertainty, and whether the yield stress and flow index are actually needed for these data.</p></div>
+      </div>
+      <div class="metrics-grid" id="metrics"></div>
+      <div class="chart-wrap" id="c-res" role="img" aria-label="Residuals against shear rate" style="height:220px"></div>
+      <p class="note" id="dw-note"></p>
+      <h4 style="margin:14px 0 0;font-size:0.9rem">Simpler models fitted to the same data</h4>
+      <p class="note">Extra-sum-of-squares F-tests ask whether the Herschel–Bulkley model's additional parameter(s) reduce the residual more than chance would. Lower AICc/BIC is better; differences above about 10 are decisive.</p>
+      <div class="table-scroll"><table id="t-models"><thead><tr><th>model</th><th>p</th><th>parameters</th><th>RMSE</th><th>R²</th><th>AICc</th><th>BIC</th><th>F-test vs Herschel–Bulkley</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <details id="details" hidden>
+      <summary>Checks and details</summary>
+      <p class="note" id="lm-note"></p>
+      <h4 style="margin:14px 0 0;font-size:0.9rem">Roots of F̄(n) on the search interval</h4>
+      <div class="table-scroll"><table id="t-roots"><thead><tr><th>root n</th><th>σ₀</th><th>K</th><th>S</th></tr></thead><tbody></tbody></table></div>
+      <h4 style="margin:16px 0 0;font-size:0.9rem">Why not just estimate the yield stress? (paper, Section 2)</h4>
+      <p class="note">Fixing σ₀ at a guess and regressing ln(σ − σ₀) on ln <span class="gd">γ</span> gives K and n that shift with every change of the guess. The rows below use guesses around the fitted σ₀; E is the RMS error of the resulting curve.</p>
+      <div class="table-scroll"><table id="t-sens"><thead><tr><th>guessed σ₀</th><th>K</th><th>n</th><th>E</th></tr></thead><tbody></tbody></table></div>
+    </details>
+  </section>
+</main>
+
+<footer class="method">
+  <h2>How the method works</h2>
+  <p>For data (xᵢ, yᵢ) and the model y = y₀ + K xⁿ, the least-squares normal equations ∂S/∂y₀ = ∂S/∂K = ∂S/∂n = 0 are three equations that are <em>linear</em> in y₀, K and a constant, with coefficients that depend only on n. They have a non-trivial solution only when the determinant of the coefficients vanishes (paper Eq. 5):</p>
+  <p><span class="det"><span>m</span><span>Σxⁿ</span><span>Σxⁿ ln x</span><span>Σxⁿ</span><span>Σx²ⁿ</span><span>Σx²ⁿ ln x</span><span>Σy</span><span>Σxⁿy</span><span>Σxⁿy ln x</span></span> = F(n) = 0.</p>
+  <ol>
+    <li>Scale the data by X = max x and Y = max y (Eq. 6): the roots do not move and the determinant stays well conditioned.</li>
+    <li>Find the root of F̄(n) by bracketing sign changes on a grid and bisection — no derivatives, no starting guess.</li>
+    <li>With n known, y₀ and K follow from a 2 × 2 linear least-squares solve.</li>
+  </ol>
+  <p>Because the consistency condition is exactly the stationarity condition of S, the result is the same least-squares minimum a Gauss–Newton or Levenberg–Marquardt solver converges to — the app verifies this by running a few Levenberg–Marquardt steps from the solution and reporting how far it moves (it should not). Negative K is allowed, so decaying curves such as the paper's chlorine-transport example (y = a − ab xⁿ) fit as well.</p>
+</footer>
+
+<script>
+(() => {
+"use strict";
+
+/* ----------------------------------------------------------------- core --- */
+// Scaled determinant Fbar(n) of Mullineux Eq. 5-6.  lx = ln(x/X), yb = y/Y.
+function determinant(n, lx, yb) {
+  const m = lx.length;
+  let sxn = 0, sxnl = 0, sx2n = 0, sx2nl = 0, sy = 0, sxny = 0, sxnyl = 0;
+  for (let i = 0; i < m; i++) {
+    const xn = Math.exp(n * lx[i]), x2n = xn * xn, l = lx[i], y = yb[i];
+    sxn += xn; sxnl += xn * l; sx2n += x2n; sx2nl += x2n * l;
+    sy += y; sxny += xn * y; sxnyl += xn * y * l;
+  }
+  const a = m, b = sxn, c = sxnl, d = sxn, e = sx2n, f = sx2nl, g = sy, h = sxny, i2 = sxnyl;
+  return a * (e * i2 - f * h) - b * (d * i2 - f * g) + c * (d * h - e * g);
+}
+
+// Least-squares y0, K at fixed n (2x2 normal equations), scaled then mapped back.
+function linearParams(n, x, y, X, Y) {
+  const m = x.length;
+  let sxn = 0, sx2n = 0, sy = 0, sxny = 0;
+  for (let i = 0; i < m; i++) {
+    const xn = Math.pow(x[i] / X, n), yb = y[i] / Y;
+    sxn += xn; sx2n += xn * xn; sy += yb; sxny += xn * yb;
+  }
+  const det = m * sx2n - sxn * sxn;
+  const y0b = (sy * sx2n - sxn * sxny) / det;
+  const Kb = (m * sxny - sxn * sy) / det;
+  return { y0: Y * y0b, K: Y * Kb / Math.pow(X, n) };
+}
+
+function sumSquares(x, y, y0, K, n) {
+  let S = 0;
+  for (let i = 0; i < x.length; i++) { const r = y0 + K * Math.pow(x[i], n) - y[i]; S += r * r; }
+  return S;
+}
+
+function bisect(f, a, b, fa) {
+  let fb = f(b);
+  for (let k = 0; k < 200; k++) {
+    const c = 0.5 * (a + b), fc = f(c);
+    if (fc === 0 || (b - a) < 1e-14 * Math.max(1, Math.abs(c))) return c;
+    if (fa * fc < 0) { b = c; fb = fc; } else { a = c; fa = fc; }
+  }
+  return 0.5 * (a + b);
+}
+
+function standardErrors(x, y, y0, K, n) {
+  const m = x.length;
+  if (m <= 3) return null;
+  // J^T J for columns [1, x^n, K x^n ln x]
+  const A = [[0,0,0],[0,0,0],[0,0,0]];
+  let S = 0;
+  for (let i = 0; i < m; i++) {
+    const xn = Math.pow(x[i], n), j = [1, xn, K * xn * Math.log(x[i])];
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) A[r][c] += j[r] * j[c];
+    const res = y0 + K * xn - y[i]; S += res * res;
+  }
+  const inv = inverse3(A);
+  if (!inv) return null;
+  const s2 = S / (m - 3);
+  const d = [inv[0][0], inv[1][1], inv[2][2]].map(v => v * s2);
+  if (d.some(v => v < 0)) return null;
+  return { se: d.map(Math.sqrt), jtjInv: inv };
+}
+
+function inverse3(A) {
+  const [[a,b,c],[d,e,f],[g,h,i]] = A;
+  const det = a*(e*i-f*h) - b*(d*i-f*g) + c*(d*h-e*g);
+  if (!isFinite(det) || Math.abs(det) < 1e-300) return null;
+  return [
+    [(e*i-f*h)/det, (c*h-b*i)/det, (b*f-c*e)/det],
+    [(f*g-d*i)/det, (a*i-c*g)/det, (c*d-a*f)/det],
+    [(d*h-e*g)/det, (b*g-a*h)/det, (a*e-b*d)/det]];
+}
+
+// The Mullineux fit.  Returns null with a message if no root is found.
+function fitHB(x, y, nMax) {
+  const m = x.length;
+  const X = Math.max(...x), Y = Math.max(...y.map(Math.abs));
+  const lx = x.map(v => Math.log(v / X)), yb = y.map(v => v / Y);
+  const F = n => determinant(n, lx, yb);
+  const nMin = 0.01, N = 1200, grid = [], vals = [];
+  for (let k = 0; k <= N; k++) { const n = nMin + (nMax - nMin) * k / N; grid.push(n); vals.push(F(n)); }
+  const roots = [];
+  for (let k = 0; k < N; k++) {
+    let root = null;
+    if (vals[k] === 0) root = grid[k];
+    else if (vals[k] * vals[k + 1] < 0) root = bisect(F, grid[k], grid[k + 1], vals[k]);
+    if (root !== null) {
+      const { y0, K } = linearParams(root, x, y, X, Y);
+      roots.push({ n: root, y0, K, S: sumSquares(x, y, y0, K, root) });
+    }
+  }
+  if (!roots.length) return { error: `F̄(n) has no sign change on 0.01 ≤ n ≤ ${nMax}. Widen the search, check that stress increases with shear rate, or check the columns.` };
+  const best = roots.reduce((a, b) => (b.S < a.S ? b : a));
+  const mean = y.reduce((a, b) => a + b, 0) / m;
+  const ssTot = y.reduce((a, v) => a + (v - mean) ** 2, 0);
+  return {
+    ...best, m, roots, X, Y,
+    E: Math.sqrt(best.S / m),
+    r2: ssTot > 0 ? 1 - best.S / ssTot : NaN,
+    se: (standardErrors(x, y, best.y0, best.K, best.n) || {}).se || null,
+    jtjInv: (standardErrors(x, y, best.y0, best.K, best.n) || {}).jtjInv || null,
+    curveF: { grid, vals },
+  };
+}
+
+// Section 2 of the paper: fix y0, regress ln(y - y0) on ln x.
+function yieldEstimateFit(x, y, y0) {
+  if (y.some(v => v <= y0)) return null;
+  const m = x.length; let sl = 0, sl2 = 0, sy = 0, sly = 0;
+  for (let i = 0; i < m; i++) { const l = Math.log(x[i]), q = Math.log(y[i] - y0); sl += l; sl2 += l * l; sy += q; sly += l * q; }
+  const det = m * sl2 - sl * sl;
+  const lnK = (sy * sl2 - sl * sly) / det, n = (m * sly - sl * sy) / det, K = Math.exp(lnK);
+  return { y0, K, n, E: Math.sqrt(sumSquares(x, y, y0, K, n) / m) };
+}
+
+// Levenberg-Marquardt polish used only as an independent check.
+function levenbergMarquardt(x, y, p0, iters = 60) {
+  let p = p0.slice(), lambda = 1e-3, S = sumSquares(x, y, ...p);
+  for (let it = 0; it < iters; it++) {
+    const A = [[0,0,0],[0,0,0],[0,0,0]], g = [0,0,0];
+    for (let i = 0; i < x.length; i++) {
+      const xn = Math.pow(x[i], p[2]), j = [1, xn, p[1] * xn * Math.log(x[i])], r = p[0] + p[1] * xn - y[i];
+      for (let a = 0; a < 3; a++) { g[a] += j[a] * r; for (let b = 0; b < 3; b++) A[a][b] += j[a] * j[b]; }
+    }
+    let improved = false;
+    for (let tries = 0; tries < 20 && !improved; tries++) {
+      const M = A.map((row, a) => row.map((v, b) => (a === b ? v * (1 + lambda) : v)));
+      const inv = inverse3(M); if (!inv) break;
+      const step = [0,1,2].map(a => -(inv[a][0]*g[0] + inv[a][1]*g[1] + inv[a][2]*g[2]));
+      const q = p.map((v, a) => v + step[a]);
+      const Sq = sumSquares(x, y, ...q);
+      if (isFinite(Sq) && Sq < S) { p = q; S = Sq; lambda = Math.max(lambda / 10, 1e-12); improved = true; }
+      else lambda *= 10;
+    }
+    if (!improved) break;
+  }
+  return { y0: p[0], K: p[1], n: p[2], S };
+}
+
+/* ------------------------------------------------------------ statistics --- */
+// Regularized incomplete beta I_x(a,b) by Lentz's continued fraction (Numerical Recipes).
+function lnGamma(z) { const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5]; let x = z, y = z, t = x + 5.5; t -= (x + 0.5) * Math.log(t); let ser = 1.000000000190015; for (let j = 0; j < 6; j++) ser += c[j] / ++y; return -t + Math.log(2.5066282746310005 * ser / x); }
+function betacf(a, b, x) { const MAXIT = 300, EPS = 3e-14, FPMIN = 1e-300; const qab = a + b, qap = a + 1, qam = a - 1; let c = 1, d = 1 - qab * x / qap; if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d; let h = d; for (let m = 1; m <= MAXIT; m++) { const m2 = 2 * m; let aa = m * (b - m) * x / ((qam + m2) * (a + m2)); d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; h *= d * c; aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2)); d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN; d = 1 / d; const del = d * c; h *= del; if (Math.abs(del - 1) < EPS) break; } return h; }
+function betainc(a, b, x) { if (x <= 0) return 0; if (x >= 1) return 1; const bt = Math.exp(lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x)); return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b; }
+function tCdf(t, df) { const x = df / (df + t * t); const p = 0.5 * betainc(df / 2, 0.5, x); return t >= 0 ? 1 - p : p; }
+function tQuantile(prob, df) { let lo = 0, hi = 50; for (let i = 0; i < 200; i++) { const mid = 0.5 * (lo + hi); if (tCdf(mid, df) < prob) lo = mid; else hi = mid; } return 0.5 * (lo + hi); }
+function fSurvival(F, d1, d2) { if (!(F > 0)) return 1; return betainc(d2 / 2, d1 / 2, d2 / (d2 + d1 * F)); }
+
+function informationCriteria(S, m, p) { const ll = m * Math.log(S / m); const aic = ll + 2 * p; return { aic, aicc: m - p - 1 > 0 ? aic + 2 * p * (p + 1) / (m - p - 1) : Infinity, bic: ll + p * Math.log(m) }; }
+
+// Goodness-of-fit statistics for predictions f (array) with p parameters.
+function goodness(x, y, f, p, cov3) {
+  const m = x.length, r = f.map((v, i) => v - y[i]);
+  const S = r.reduce((a, v) => a + v * v, 0), mean = y.reduce((a, b) => a + b, 0) / m;
+  const ssTot = y.reduce((a, v) => a + (v - mean) ** 2, 0);
+  const r2 = ssTot > 0 ? 1 - S / ssTot : NaN, adj = m > p ? 1 - (1 - r2) * (m - 1) / (m - p) : NaN;
+  const ic = informationCriteria(S, m, p);
+  let dw = 0; for (let i = 1; i < m; i++) dw += (r[i] - r[i - 1]) ** 2; dw = S > 0 ? dw / S : NaN;
+  const rel = r.map((v, i) => 100 * v / y[i]).filter(isFinite);
+  const s2 = m > p ? S / (m - p) : NaN;
+  const out = { m, p, S, rmse: Math.sqrt(S / m), s: Math.sqrt(s2), mae: r.reduce((a, v) => a + Math.abs(v), 0) / m,
+    maxAbs: Math.max(...r.map(Math.abs)), mape: rel.length ? rel.reduce((a, v) => a + Math.abs(v), 0) / rel.length : NaN,
+    r2, adj, ...ic, dw, residuals: r, se: null, ci: null, corr: null };
+  if (cov3) {
+    const cov = cov3.map(row => row.map(v => v * s2)), d = [0, 1, 2].map(i => Math.sqrt(cov[i][i]));
+    if (d.every(v => isFinite(v) && v > 0)) { out.se = d; out.ci = d.map(v => v * tQuantile(0.975, m - p)); out.corr = cov.map((row, i) => row.map((v, j) => v / (d[i] * d[j]))); }
+  }
+  return out;
+}
+
+// Nested models fitted by least squares on the original scale.
+function fitLinear2(c1, c2, y) { // y = a c1 + b c2
+  let s11 = 0, s12 = 0, s22 = 0, s1y = 0, s2y = 0;
+  for (let i = 0; i < y.length; i++) { s11 += c1[i] * c1[i]; s12 += c1[i] * c2[i]; s22 += c2[i] * c2[i]; s1y += c1[i] * y[i]; s2y += c2[i] * y[i]; }
+  const det = s11 * s22 - s12 * s12; return [(s1y * s22 - s12 * s2y) / det, (s11 * s2y - s12 * s1y) / det];
+}
+function nestedModels(x, y, hb, nMax) {
+  const m = x.length, ones = x.map(() => 1);
+  const eta = x.reduce((a, v, i) => a + v * y[i], 0) / x.reduce((a, v) => a + v * v, 0);
+  const [b0, b1] = fitLinear2(ones, x, y);
+  const Sn = n => { const xn = x.map(v => Math.pow(v, n)); const K = xn.reduce((a, v, i) => a + v * y[i], 0) / xn.reduce((a, v) => a + v * v, 0); return { S: xn.reduce((a, v, i) => a + (K * v - y[i]) ** 2, 0), K }; };
+  let bestN = 0.01, bestS = Infinity; for (let k = 0; k <= 400; k++) { const n = 0.01 + (nMax - 0.01) * k / 400; const q = Sn(n).S; if (q < bestS) { bestS = q; bestN = n; } }
+  let lo = Math.max(0.01, bestN - (nMax - 0.01) / 400), hi = Math.min(nMax, bestN + (nMax - 0.01) / 400); const g = (Math.sqrt(5) - 1) / 2;
+  let c = hi - g * (hi - lo), d = lo + g * (hi - lo), fc = Sn(c).S, fd = Sn(d).S;
+  for (let i = 0; i < 80; i++) { if (fc < fd) { hi = d; d = c; fd = fc; c = hi - g * (hi - lo); fc = Sn(c).S; } else { lo = c; c = d; fc = fd; d = lo + g * (hi - lo); fd = Sn(d).S; } }
+  const nPL = 0.5 * (lo + hi), KPL = Sn(nPL).K;
+  const make = (name, p, pars, f) => { const pred = x.map(f); const G = goodness(x, y, pred, p, null); return { name, p, pars, f, S: G.S, rmse: G.rmse, r2: G.r2, aicc: G.aicc, bic: G.bic }; };
+  const models = [
+    make("Newtonian", 1, { "η": eta }, v => eta * v),
+    make("Power law", 2, { K: KPL, n: nPL }, v => KPL * Math.pow(v, nPL)),
+    make("Bingham", 2, { "σ₀": b0, K: b1 }, v => b0 + b1 * v),
+    make("Herschel–Bulkley", 3, { "σ₀": hb.y0, K: hb.K, n: hb.n }, v => hb.y0 + hb.K * Math.pow(v, hb.n)) ];
+  const full = models[3];
+  for (const mdl of models.slice(0, 3)) {
+    const d1 = full.p - mdl.p, d2 = m - full.p;
+    const F = full.S > 0 ? ((mdl.S - full.S) / d1) / (full.S / d2) : Infinity;
+    mdl.test = { F, d1, d2, p: fSurvival(F, d1, d2) };
+  }
+  return models;
+}
+
+/* --------------------------------------------------------------- parsing --- */
+function isNum(s) { return s !== "" && isFinite(Number(String(s).replace(",", "."))); }
+function parseTable(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith("#"));
+  if (!lines.length) throw new Error("The file is empty.");
+  let rows = null;
+  for (const delim of [";", "\t", ",", null]) {
+    const cand = lines.map(l => (delim ? l.split(delim) : l.split(/\s+/)).map(c => c.trim()));
+    const body = cand.length > 1 ? cand.slice(1) : cand;
+    const ncol = Math.min(...body.map(r => r.length));
+    let numeric = 0;
+    for (let j = 0; j < ncol; j++) if (body.every(r => isNum(r[j]))) numeric++;
+    if (numeric >= 2) { rows = cand; break; }
+  }
+  if (!rows) throw new Error("Could not find two numeric columns. Expected shear rate and shear stress, one pair per line.");
+  const hasHeader = !rows[0].every(c => c === "" || isNum(c));
+  const header = hasHeader ? rows[0] : rows[0].map((_, j) => `column ${j + 1}`);
+  const body = hasHeader ? rows.slice(1) : rows;
+  const ncol = Math.min(...body.map(r => r.length));
+  const numericCols = [];
+  for (let j = 0; j < ncol; j++) if (body.every(r => isNum(r[j]))) numericCols.push(j);
+  const col = (j) => body.map(r => Number(r[j].replace(",", ".")));
+  return { header, numericCols, col, rows: body.length };
+}
+
+/* ------------------------------------------------------------ synthetic --- */
+function mulberry32(seed) { return () => { let t = (seed += 0x6D2B79F5); t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function gaussianPair(rand) { const u = 1 - rand(), v = rand(); const r = Math.sqrt(-2 * Math.log(u)); return [r * Math.cos(2 * Math.PI * v), r * Math.sin(2 * Math.PI * v)]; }
+function synthetic({ y0, K, n, xmin, xmax, m, noise, seed, spacing }) {
+  const rand = mulberry32(seed | 0), x = [], y = [];
+  let cache = null;
+  for (let i = 0; i < m; i++) {
+    const t = m === 1 ? 0 : i / (m - 1);
+    const xi = spacing === "log" ? xmin * Math.pow(xmax / xmin, t) : xmin + (xmax - xmin) * t;
+    let z; if (cache === null) { const g = gaussianPair(rand); z = g[0]; cache = g[1]; } else { z = cache; cache = null; }
+    const yi = (y0 + K * Math.pow(xi, n)) * (1 + noise * z);
+    x.push(xi); y.push(yi);
+  }
+  return { x, y };
+}
+
+/* -------------------------------------------------------------------- UI --- */
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 4) => (isFinite(v) ? Number(v.toPrecision(d)).toString() : "–");
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+let current = null;        // { x, y, source, fit }
+
+// data source switch
+document.querySelectorAll(".seg button").forEach(btn => btn.addEventListener("click", () => {
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+  for (const s of ["synthetic", "upload", "paste"]) $("src-" + s).hidden = btn.dataset.src !== s;
+}));
+
+$("btn-generate").addEventListener("click", () => {
+  const p = { y0: +$("s-y0").value, K: +$("s-K").value, n: +$("s-n").value, xmin: +$("s-xmin").value, xmax: +$("s-xmax").value,
+              m: Math.round(+$("s-m").value), noise: +$("s-noise").value / 100, seed: +$("s-seed").value, spacing: $("s-spacing").value };
+  if (!(p.xmin > 0) || !(p.xmax > p.xmin) || !(p.m >= 4)) { setMsg("fit-msg", "Shear rates must satisfy 0 < min < max and at least 4 points are needed.", true); return; }
+  const { x, y } = synthetic(p);
+  runFit(x, y, `synthetic: σ₀=${p.y0}, K=${p.K}, n=${p.n}, ${(p.noise * 100).toFixed(1)}% noise`);
+});
+
+// upload
+let parsed = null;
+const drop = $("drop");
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); });
+$("file").addEventListener("change", e => { const f = e.target.files && e.target.files[0]; if (f) loadFile(f); });
+
+function loadFile(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      parsed = parseTable(String(reader.result));
+      parsed.name = file.name;
+      const fill = (sel, def) => { sel.innerHTML = ""; parsed.numericCols.forEach(j => { const o = document.createElement("option"); o.value = j; o.textContent = parsed.header[j]; sel.appendChild(o); }); sel.value = String(def); };
+      fill($("col-x"), parsed.numericCols[0]); fill($("col-y"), parsed.numericCols[1]);
+      $("col-pick").hidden = parsed.numericCols.length <= 2;
+      $("btn-fit-upload").disabled = false;
+      setMsg("upload-msg", `${file.name}: ${parsed.rows} rows, columns “${parsed.header[parsed.numericCols[0]]}” and “${parsed.header[parsed.numericCols[1]]}”.`, false);
+      $("btn-fit-upload").click();
+    } catch (err) { parsed = null; $("btn-fit-upload").disabled = true; setMsg("upload-msg", err.message, true); }
+  };
+  reader.readAsText(file);
+}
+$("btn-fit-upload").addEventListener("click", () => {
+  if (!parsed) return;
+  const jx = +$("col-x").value, jy = +$("col-y").value;
+  if (jx === jy) { setMsg("upload-msg", "Choose two different columns.", true); return; }
+  runFit(parsed.col(jx), parsed.col(jy), parsed.name);
+});
+
+// paste
+$("btn-fit-paste").addEventListener("click", () => {
+  const text = $("paste").value.trim() || $("paste").placeholder;
+  try { const t = parseTable(text); runFit(t.col(t.numericCols[0]), t.col(t.numericCols[1]), "pasted data"); setMsg("paste-msg", `${t.rows} rows read.`, false); }
+  catch (err) { setMsg("paste-msg", err.message, true); }
+});
+
+function setMsg(id, text, isError) { const el = $(id); el.textContent = text; el.className = "msg " + (isError ? "error" : "ok"); }
+
+function runFit(xRaw, yRaw, source) {
+  const pairs = xRaw.map((v, i) => [v, yRaw[i]]).filter(p => isFinite(p[0]) && isFinite(p[1]));
+  const bad = pairs.filter(p => p[0] <= 0).length;
+  const data = pairs.filter(p => p[0] > 0).sort((a, b) => a[0] - b[0]);
+  const x = data.map(p => p[0]), y = data.map(p => p[1]);
+  if (x.length < 4) { setMsg("fit-msg", "At least four points with positive shear rate are needed.", true); return; }
+  const nMax = Math.max(0.05, +$("nmax").value || 5);
+  const fit = fitHB(x, y, nMax);
+  if (fit.error) { setMsg("fit-msg", fit.error, true); current = { x, y, source, fit: null }; drawCharts(); return; }
+  current = { x, y, source, fit };
+  setMsg("fit-msg", (bad ? `${bad} point(s) with non-positive shear rate were dropped. ` : "") + (fit.roots.length > 1 ? `${fit.roots.length} roots found; the one with the smallest S is shown.` : ""), false);
+  showResult();
+  drawCharts();
+}
+
+function showResult() {
+  const { x, y, fit, source } = current;
+  const eq = $("equation");
+  eq.classList.remove("idle");
+  eq.innerHTML = `<math display="inline"><mrow><mi>σ</mi><mo>=</mo><mn>${fmt(fit.y0, 4)}</mn><mo>${fit.K < 0 ? "−" : "+"}</mo><mn class="k">${fmt(Math.abs(fit.K), 4)}</mn><mo>⁢</mo><msup><mover accent="true"><mi>γ</mi><mo>˙</mo></mover><mn class="n">${fmt(fit.n, 4)}</mn></msup></mrow></math><span class="unit">Pa, with <span class="gd">γ</span> in 1/s</span>`;
+  $("stats").hidden = false; $("dl").hidden = false; $("details").hidden = false;
+  $("v-y0").textContent = fmt(fit.y0, 5) + " Pa";
+  $("v-K").textContent = fmt(fit.K, 5) + " Pa·sⁿ";
+  $("v-n").textContent = fmt(fit.n, 5);
+  const se = fit.se;
+  $("se-y0").textContent = se ? `± ${fmt(se[0], 2)}` : ""; $("se-K").textContent = se ? `± ${fmt(se[1], 2)}` : ""; $("se-n").textContent = se ? `± ${fmt(se[2], 2)} (approx. std. error)` : "";
+  $("v-m").textContent = fit.m; $("v-src").textContent = source;
+  $("v-E").textContent = fmt(fit.E, 4) + " Pa"; $("v-S").textContent = `S = ${fmt(fit.S, 4)} Pa²`;
+  $("v-r2").textContent = fmt(fit.r2, 6);
+  renderGoodness();
+  const lm = levenbergMarquardt(x, y, [fit.y0, fit.K, fit.n]);
+  const move = Math.max(Math.abs(lm.y0 - fit.y0) / Math.max(1e-12, Math.abs(fit.y0)), Math.abs(lm.K - fit.K) / Math.max(1e-12, Math.abs(fit.K)), Math.abs(lm.n - fit.n) / Math.max(1e-12, Math.abs(fit.n)));
+  $("v-lm").textContent = `Levenberg–Marquardt moves it by ${move < 1e-9 ? "< 1e-9" : fmt(move, 2)} (relative)`;
+  $("lm-note").textContent = `Independent check: Levenberg–Marquardt started at the determinant-method solution gives σ₀ = ${fmt(lm.y0, 6)}, K = ${fmt(lm.K, 6)}, n = ${fmt(lm.n, 6)}, S = ${fmt(lm.S, 6)} — the same least-squares minimum.`;
+  const tb = $("t-roots").querySelector("tbody"); tb.innerHTML = "";
+  fit.roots.forEach(r => { const tr = document.createElement("tr"); if (r === fit.roots.find(q => q.n === fit.n)) tr.className = "best"; tr.innerHTML = `<td>${fmt(r.n, 5)}</td><td>${fmt(r.y0, 5)}</td><td>${fmt(r.K, 5)}</td><td>${fmt(r.S, 5)}</td>`; tb.appendChild(tr); });
+  const ts = $("t-sens").querySelector("tbody"); ts.innerHTML = "";
+  const span = Math.max(Math.abs(fit.y0) * 0.2, 0.05 * fit.Y);
+  [-1, -0.5, 0, 0.5, 1].forEach(f => {
+    const g = fit.y0 + f * span, r = yieldEstimateFit(x, y, g);
+    const tr = document.createElement("tr"); if (f === 0) tr.className = "best";
+    tr.innerHTML = r ? `<td>${fmt(g, 4)}${f === 0 ? " (fitted σ₀)" : ""}</td><td>${fmt(r.K, 4)}</td><td>${fmt(r.n, 4)}</td><td>${fmt(r.E, 3)}</td>` : `<td>${fmt(g, 4)}</td><td colspan="3">not possible: some stresses are below this guess</td>`;
+    ts.appendChild(tr);
+  });
+}
+
+/* ------------------------------------------------------- SVG charting --- */
+function niceTicks(lo, hi, target = 6) {
+  const span = hi - lo || 1, raw = span / target, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(f => f * mag).find(st => span / st <= target) || mag * 10;
+  const t = []; for (let k = Math.ceil(lo / step - 1e-9); k * step <= hi + 1e-9 * span; k++) t.push(k === 0 ? 0 : +(k * step).toPrecision(10));
+  return t;
+}
+function logTicks(lo, hi) {
+  const t = []; const d0 = Math.floor(Math.log10(lo)), d1 = Math.ceil(Math.log10(hi));
+  const sub = d1 - d0 <= 3 ? [1, 2, 5] : [1];
+  for (let d = d0; d <= d1; d++) for (const f of sub) { const v = f * Math.pow(10, d); if (v >= lo / 1.0001 && v <= hi * 1.0001) t.push(v); }
+  return t;
+}
+const fmtTick = v => { const a = Math.abs(v); if (a === 0) return "0"; if (a >= 1e5 || a < 1e-3) return v.toExponential(0); return Number(v.toPrecision(4)).toString(); };
+
+// series: {type: "points"|"line", data: [{x,y}], color, label, dash?, r?}
+function svgChart(el, { series, xLog = false, xLabel = "", yLabel = "", xMin, xMax, yMin, yMax, legend = "left" }) {
+  const W = Math.max(320, el.clientWidth || 640), H = Math.max(200, el.clientHeight || 320);
+  const ml = 58, mr = 14, mt = 12, mb = 42, pw = W - ml - mr, ph = H - mt - mb;
+  const all = series.flatMap(s => s.data);
+  let x0 = xMin ?? Math.min(...all.map(p => p.x)), x1 = xMax ?? Math.max(...all.map(p => p.x));
+  let y0 = yMin ?? Math.min(...all.map(p => p.y)), y1 = yMax ?? Math.max(...all.map(p => p.y));
+  if (y1 === y0) { y1 += 1; y0 -= 1; }
+  if (!xLog) { const px = 0.02 * (x1 - x0 || 1); if (xMin === undefined) x0 -= px; if (xMax === undefined) x1 += px; }
+  const py = 0.06 * (y1 - y0); y0 -= py; y1 += py;
+  const sx = v => ml + pw * (xLog ? (Math.log10(v) - Math.log10(x0)) / (Math.log10(x1) - Math.log10(x0)) : (v - x0) / (x1 - x0));
+  const sy = v => mt + ph * (1 - (v - y0) / (y1 - y0));
+  const ns = "http://www.w3.org/2000/svg", mk = (t, a) => { const e = document.createElementNS(ns, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const svg = mk("svg", { viewBox: `0 0 ${W} ${H}` });
+  el.innerHTML = ""; el.appendChild(svg);
+  const xt = xLog ? logTicks(x0, x1) : niceTicks(x0, x1), yt = niceTicks(y0, y1);
+  for (const v of xt) { const X = sx(v); svg.appendChild(mk("line", { x1: X, x2: X, y1: mt, y2: mt + ph, class: "grid" })); const t = mk("text", { x: X, y: mt + ph + 16, "text-anchor": "middle" }); t.textContent = fmtTick(v); svg.appendChild(t); }
+  for (const v of yt) { const Y = sy(v); svg.appendChild(mk("line", { x1: ml, x2: ml + pw, y1: Y, y2: Y, class: "grid" })); const t = mk("text", { x: ml - 6, y: Y + 4, "text-anchor": "end" }); t.textContent = fmtTick(v); svg.appendChild(t); }
+  svg.appendChild(mk("line", { x1: ml, x2: ml, y1: mt, y2: mt + ph, class: "axis" }));
+  svg.appendChild(mk("line", { x1: ml, x2: ml + pw, y1: mt + ph, y2: mt + ph, class: "axis" }));
+  const xl = mk("text", { x: ml + pw / 2, y: H - 6, "text-anchor": "middle" });
+  const gdAt = xLabel.indexOf("{gd}");
+  if (gdAt < 0) xl.textContent = xLabel;
+  else {
+    const pre = mk("tspan", {}), gam = mk("tspan", { "font-style": "italic" }), post = mk("tspan", {});
+    pre.textContent = xLabel.slice(0, gdAt); gam.textContent = "γ"; post.textContent = xLabel.slice(gdAt + 4);
+    xl.appendChild(pre); xl.appendChild(gam); xl.appendChild(post);
+  }
+  svg.appendChild(xl);
+  if (gdAt >= 0) { // draw the over-dot explicitly: combining characters do not stack reliably in SVG text
+    try { const total = xl.getComputedTextLength(), preLen = xl.childNodes[0].getComputedTextLength(), gLen = xl.childNodes[1].getComputedTextLength();
+      svg.appendChild(mk("circle", { cx: ml + pw / 2 - total / 2 + preLen + gLen / 2, cy: H - 6 - 13.5, r: 1.3, fill: css("--ink-2") })); } catch (e) { /* not attached yet */ }
+  }
+  const yl = mk("text", { x: 14, y: mt + ph / 2, "text-anchor": "middle", transform: `rotate(-90 14 ${mt + ph / 2})` }); yl.textContent = yLabel; svg.appendChild(yl);
+  const clip = mk("clipPath", { id: "clip-" + el.id }); clip.appendChild(mk("rect", { x: ml, y: mt, width: pw, height: ph })); svg.appendChild(clip);
+  const g = mk("g", { "clip-path": `url(#clip-${el.id})` }); svg.appendChild(g);
+  let lx = legend === "right" ? ml + pw - 110 : ml + 8, ly = mt + 14;
+  for (const s of series) {
+    if (s.type === "line") {
+      const d = s.data.filter(p => isFinite(p.x) && isFinite(p.y)).map((p, i) => `${i ? "L" : "M"}${sx(p.x).toFixed(1)} ${sy(p.y).toFixed(1)}`).join(" ");
+      g.appendChild(mk("path", { d, fill: "none", stroke: s.color, "stroke-width": s.width || 2, "stroke-dasharray": s.dash || "none" }));
+    } else {
+      for (const p of s.data) g.appendChild(mk("circle", { cx: sx(p.x), cy: sy(p.y), r: s.r || 3.5, fill: s.color, "fill-opacity": s.type === "points" ? 0.85 : 1 }));
+    }
+    if (s.label) {
+      const sw = mk(s.type === "line" ? "line" : "circle", s.type === "line" ? { x1: lx, x2: lx + 18, y1: ly - 4, y2: ly - 4, stroke: s.color, "stroke-width": 2, "stroke-dasharray": s.dash || "none" } : { cx: lx + 9, cy: ly - 4, r: 4, fill: s.color });
+      svg.appendChild(sw); const t = mk("text", { x: lx + 24, y: ly }); t.textContent = s.label; svg.appendChild(t); ly += 16;
+    }
+  }
+}
+
+function renderGoodness() {
+  const { x, y, fit } = current;
+  const g = goodness(x, y, x.map(v => fit.y0 + fit.K * Math.pow(v, fit.n)), 3, fit.jtjInv);
+  current.gof = g;
+  $("gof-block").hidden = false;
+  const row = (l, v) => `<div><span>${l}</span><span>${v}</span></div>`;
+  $("metrics").innerHTML = [
+    row("Residual sum of squares S", fmt(g.S, 5) + " Pa²"), row("RMS error E = √(S/m)", fmt(g.rmse, 4) + " Pa"),
+    row("Residual std. error s = √(S/(m−p))", fmt(g.s, 4) + " Pa"), row("Mean absolute error", fmt(g.mae, 4) + " Pa"),
+    row("Largest |residual|", fmt(g.maxAbs, 4) + " Pa"), row("Mean absolute % error", fmt(g.mape, 3) + " %"),
+    row("R²", fmt(g.r2, 6)), row("Adjusted R²", fmt(g.adj, 6)),
+    row("AICc", fmt(g.aicc, 5)), row("BIC", fmt(g.bic, 5)),
+    row("Durbin–Watson", fmt(g.dw, 3)),
+    row("Corr(σ₀, K) / (σ₀, n) / (K, n)", g.corr ? `${g.corr[0][1].toFixed(2)} / ${g.corr[0][2].toFixed(2)} / ${g.corr[1][2].toFixed(2)}` : "–"),
+  ].join("");
+  if (g.ci) { $("se-y0").textContent = `± ${fmt(g.se[0], 2)}  (95 % CI ± ${fmt(g.ci[0], 2)})`; $("se-K").textContent = `± ${fmt(g.se[1], 2)}  (95 % CI ± ${fmt(g.ci[1], 2)})`; $("se-n").textContent = `± ${fmt(g.se[2], 2)}  (95 % CI ± ${fmt(g.ci[2], 2)})`; }
+  $("dw-note").textContent = g.dw < 1.2 ? `Durbin–Watson = ${fmt(g.dw, 3)}: residuals run in same-sign stretches, so the curve shape is systematically off (compare the simpler models below, check for wall slip or instrument effects at the ends of the range).`
+    : g.dw > 2.8 ? `Durbin–Watson = ${fmt(g.dw, 3)}: residuals alternate more than random noise would; this is unusual and may indicate over-smoothed or interpolated data.`
+    : `Durbin–Watson = ${fmt(g.dw, 3)} (2 for independent residuals): no strong systematic misfit.`;
+  const models = nestedModels(x, y, fit, Math.max(0.05, +$("nmax").value || 5));
+  current.models = models;
+  const bestAicc = Math.min(...models.map(m => m.aicc));
+  const tb = $("t-models").querySelector("tbody"); tb.innerHTML = "";
+  for (const mdl of models) {
+    const tr = document.createElement("tr"); if (mdl.aicc === bestAicc) tr.className = "best";
+    const pars = Object.entries(mdl.pars).map(([k, v]) => `${k} = ${fmt(v, 4)}`).join(", ");
+    const test = mdl.test ? (isFinite(mdl.test.F) ? `F(${mdl.test.d1},${mdl.test.d2}) = ${fmt(mdl.test.F, 3)}, p = ${mdl.test.p < 1e-4 ? mdl.test.p.toExponential(1) : fmt(mdl.test.p, 2)} <span class="verdict ${mdl.test.p < 0.05 ? "yes" : "no"}">${mdl.test.p < 0.05 ? "extra parameter(s) justified" : "not justified at 5 %"}</span>` : "–") : "reference";
+    tr.innerHTML = `<td>${mdl.name}</td><td>${mdl.p}</td><td style="text-align:left">${pars}</td><td>${fmt(mdl.rmse, 4)}</td><td>${fmt(mdl.r2, 5)}</td><td>${fmt(mdl.aicc, 5)}</td><td>${fmt(mdl.bic, 5)}</td><td style="text-align:left">${test}</td>`;
+    tb.appendChild(tr);
+  }
+}
+
+function drawCharts() {
+  const { x, y, fit } = current;
+  const teal = css("--teal"), amber = css("--amber"), dataC = css("--data"), ink = css("--ink-2");
+  const logx = $("logx").checked;
+  const pts = x.map((v, i) => ({ x: v, y: y[i] }));
+  const series = [{ type: "points", data: pts, color: dataC, label: "data" }];
+  if (fit) {
+    const lo = x[0], hi = x[x.length - 1], curve = [];
+    for (let k = 0; k <= 300; k++) { const t = k / 300; const xv = logx ? lo * Math.pow(hi / lo, t) : lo + (hi - lo) * t; curve.push({ x: xv, y: fit.y0 + fit.K * Math.pow(xv, fit.n) }); }
+    series.push({ type: "line", data: curve, color: teal, width: 2.4, label: "Herschel–Bulkley fit" });
+  }
+  svgChart($("c-fit"), { series, xLog: logx, xLabel: "Shear rate {gd} (1/s)", yLabel: "Shear stress σ (Pa)" });
+  if (!fit) { $("c-det").innerHTML = ""; $("c-res").innerHTML = ""; return; }
+  if (current.gof) {
+    const g = current.gof, band = 2 * g.s, lo = x[0], hi = x[x.length - 1];
+    svgChart($("c-res"), { xLog: logx, xLabel: "Shear rate {gd} (1/s)", yLabel: "Residual (Pa)", legend: "right", series: [
+      { type: "line", data: [{ x: lo, y: band }, { x: hi, y: band }], color: ink, width: 1, dash: "3 4", label: "± 2 s" },
+      { type: "line", data: [{ x: lo, y: -band }, { x: hi, y: -band }], color: ink, width: 1, dash: "3 4" },
+      { type: "line", data: [{ x: lo, y: 0 }, { x: hi, y: 0 }], color: ink, width: 1 },
+      { type: "points", data: x.map((v, i) => ({ x: v, y: g.residuals[i] })), color: dataC, label: "fit − data" } ] });
+  }
+  const xMaxDet = Math.min(fit.curveF.grid[fit.curveF.grid.length - 1], Math.max(1, 3 * fit.n));
+  const F = fit.curveF.grid.map((n, i) => ({ x: n, y: fit.curveF.vals[i] })).filter(p => p.x <= xMaxDet);
+  svgChart($("c-det"), { xMin: 0, xMax: xMaxDet, xLabel: "n", yLabel: "F̄(n)", series: [
+    { type: "line", data: [{ x: 0, y: 0 }, { x: xMaxDet, y: 0 }], color: ink, width: 1, dash: "4 4" },
+    { type: "line", data: F, color: teal, width: 2.2, label: "F̄(n)" },
+    { type: "marker", data: [{ x: fit.n, y: 0 }], color: amber, r: 6, label: `root n = ${fmt(fit.n, 4)}` } ] });
+}
+window.addEventListener("resize", () => { if (current) drawCharts(); });
+$("logx").addEventListener("change", () => { if (current) drawCharts(); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (current) drawCharts(); });
+
+/* ------------------------------------------------------------ downloads --- */
+async function saveFile(filename, text) {
+  try {
+    if (window.claude && typeof window.claude.use === "function") {
+      const dl = await window.claude.use("downloads");
+      if (dl) { await dl.save({ filename, data: text }); return; }
+    }
+  } catch (err) { if (err && err.code === "declined") return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+  a.download = filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$("btn-dl-curve").addEventListener("click", () => {
+  const { x, fit } = current; if (!fit) return;
+  const lo = x[0], hi = x[x.length - 1]; let s = "shear_rate_1_s,shear_stress_Pa_fitted\n";
+  for (let k = 0; k <= 200; k++) { const xv = lo * Math.pow(hi / lo, k / 200); s += `${xv.toPrecision(7)},${(fit.y0 + fit.K * Math.pow(xv, fit.n)).toPrecision(7)}\n`; }
+  saveFile("herschel_bulkley_fitted_curve.csv", s);
+});
+$("btn-dl-data").addEventListener("click", () => {
+  const { x, y, gof } = current; let s = "shear_rate_1_s,shear_stress_Pa" + (gof ? ",fitted_stress_Pa,residual_Pa" : "") + "\n";
+  x.forEach((v, i) => { s += `${v},${y[i]}` + (gof ? `,${y[i] + gof.residuals[i]},${gof.residuals[i]}` : "") + "\n"; }); saveFile("herschel_bulkley_data.csv", s);
+});
+$("btn-dl-json").addEventListener("click", () => {
+  const { fit, source } = current; if (!fit) return;
+  saveFile("herschel_bulkley_fit.json", JSON.stringify({ method: "Mullineux (2008) consistency-condition, doi:10.1016/j.apm.2007.09.010", source,
+    yield_stress_Pa: fit.y0, consistency_Pa_s_n: fit.K, flow_index_n: fit.n, residual_sum_of_squares: fit.S, rms_error: fit.E, r_squared: fit.r2,
+    standard_errors: fit.se ? { y0: fit.se[0], K: fit.se[1], n: fit.se[2] } : null, points: fit.m,
+    goodness_of_fit: current.gof ? { S: current.gof.S, rmse: current.gof.rmse, residual_std_error: current.gof.s, mae: current.gof.mae, max_abs_residual: current.gof.maxAbs, mape_pct: current.gof.mape, r_squared: current.gof.r2, adjusted_r_squared: current.gof.adj, aic: current.gof.aic, aicc: current.gof.aicc, bic: current.gof.bic, durbin_watson: current.gof.dw, ci95_half_width: current.gof.ci, correlation: current.gof.corr, residuals: current.gof.residuals } : null,
+    model_comparison: current.models ? current.models.map(m => ({ model: m.name, p: m.p, parameters: m.pars, S: m.S, rmse: m.rmse, r_squared: m.r2, aicc: m.aicc, bic: m.bic, f_test_vs_herschel_bulkley: m.test || null })) : null,
+    roots_of_F: fit.roots.map(r => ({ n: r.n, y0: r.y0, K: r.K, S: r.S })) }, null, 2));
+});
+
+/* ---------------------------------------------------------------- start --- */
+$("btn-generate").click();
+})();
+</script>
+</body>
+</html>

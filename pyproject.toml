@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hb-mullineux"
+version = "1.0.0"
+description = "Herschel-Bulkley curve fitting by the Mullineux (2008) determinant method"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Yanwei Wang"}]
+classifiers = ["License :: OSI Approved :: MIT License"]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "matplotlib>=3.7"]
+
+[tool.setuptools]
+packages = ["hb_mullineux"]
