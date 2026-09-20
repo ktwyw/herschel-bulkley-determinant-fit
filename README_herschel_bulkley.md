@@ -108,4 +108,4 @@ The shear rate is written $\dot\gamma$ throughout. In the figures this is matplo
 
 ## License
 
-MIT (see `LICENSE`). The reproduced paper is © Elsevier and is not included; the "Chlorine" data are the Bates & Watts data set as tabulated in the paper.
+MIT (see `LICENSE`). The reproduced paper is © Elsevier; the "Chlorine" data are the Bates & Watts data set as tabulated in the paper.
